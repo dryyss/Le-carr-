@@ -1,0 +1,17 @@
+# Base Postgres de dev local : docker compose up -d
+# DATABASE_URI=postgres://lecarre:lecarre@127.0.0.1:5433/lecarre
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lecarre
+      POSTGRES_PASSWORD: lecarre
+      POSTGRES_DB: lecarre
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
