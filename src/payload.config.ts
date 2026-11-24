@@ -10,12 +10,13 @@ import { fileURLToPath } from 'url'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
 import { Settings } from './globals/Settings'
+import { siteUrl } from './lib/site-url'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  serverURL: process.env.NEXT_PUBLIC_SITE_URL || '',
+  serverURL: siteUrl,
   admin: {
     user: Users.slug,
     importMap: {
@@ -39,7 +40,8 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || '',
+      // DATABASE_URL : nom injecté par l'intégration Neon de Vercel
+      connectionString: process.env.DATABASE_URI || process.env.DATABASE_URL || '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
   }),

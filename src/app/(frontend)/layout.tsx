@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter } from 'next/font/google'
 import React from 'react'
 
+import { siteUrl } from '@/lib/site-url'
+
 import './globals.css'
 
 const display = Cormorant_Garamond({
@@ -18,7 +20,7 @@ const body = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Le Carré · Lounge à Saint-Brice-sous-Forêt',
     template: '%s · Le Carré',
