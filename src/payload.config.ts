@@ -44,6 +44,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI || process.env.DATABASE_URL || '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
+    // Jamais de synchro automatique du schéma : tout passe par les migrations (dev comme prod),
+    // sinon `payload migrate` bloque le build Vercel sur une question interactive.
+    push: false,
   }),
   sharp,
   plugins: [
