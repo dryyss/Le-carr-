@@ -56,3 +56,6 @@ node_modules/
 /*.pdf
 /devis.py
 tsconfig.tsbuildinfo
+/logo.png
+test-results/
+!.env.example

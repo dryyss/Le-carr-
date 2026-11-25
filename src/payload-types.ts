@@ -67,17 +67,45 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
+    reservations: Reservation;
+    orders: Order;
+    tables: Table;
+    'privatization-requests': PrivatizationRequest;
+    'menu-categories': MenuCategory;
+    'menu-items': MenuItem;
+    customers: Customer;
+    'loyalty-transactions': LoyaltyTransaction;
+    rewards: Reward;
+    events: Event;
     media: Media;
+    users: User;
+    'sms-logs': SmsLog;
+    'otp-codes': OtpCode;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    customers: {
+      history: 'loyalty-transactions';
+    };
+  };
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    reservations: ReservationsSelect<false> | ReservationsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
+    'privatization-requests': PrivatizationRequestsSelect<false> | PrivatizationRequestsSelect<true>;
+    'menu-categories': MenuCategoriesSelect<false> | MenuCategoriesSelect<true>;
+    'menu-items': MenuItemsSelect<false> | MenuItemsSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
+    'loyalty-transactions': LoyaltyTransactionsSelect<false> | LoyaltyTransactionsSelect<true>;
+    rewards: RewardsSelect<false> | RewardsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    'sms-logs': SmsLogsSelect<false> | SmsLogsSelect<true>;
+    'otp-codes': OtpCodesSelect<false> | OtpCodesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -88,9 +116,11 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
+    homepage: Homepage;
     settings: Setting;
   };
   globalsSelect: {
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
     settings: SettingsSelect<false> | SettingsSelect<true>;
   };
   locale: null;
@@ -123,34 +153,219 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "reservations".
  */
-export interface User {
+export interface Reservation {
   id: number;
-  name: string;
+  ref?: string | null;
+  status: 'en_attente' | 'confirmee' | 'arrivee' | 'terminee' | 'annulee' | 'no_show';
+  source?: ('web' | 'telephone' | 'sur_place') | null;
   /**
-   * Le serveur accède seulement à l’écran bar et aux commandes et réservations du jour.
+   * AAAA-MM-JJ. Une résa à 00:30 se met sur la date de la soirée.
    */
-  role: 'gerant' | 'serveur';
+  date: string;
+  startTime: string;
+  durationMin: number;
+  partySize: number;
+  name: string;
+  phone: string;
+  email?: string | null;
+  /**
+   * Attribuées automatiquement pour les résas web. Modifiables à la main.
+   */
+  tables?: (number | Table)[] | null;
+  customer?: (number | null) | Customer;
+  event?: (number | null) | Event;
+  notes?: string | null;
+  startMin?: number | null;
+  startsAt?: string | null;
+  smsConfirmSentAt?: string | null;
+  smsReminderSentAt?: string | null;
   updatedAt: string;
   createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables".
+ */
+export interface Table {
+  id: number;
+  /**
+   * Court, utilisé dans l’URL du QR (ex. T07).
+   */
+  code: string;
+  label: string;
+  zone: 'salle' | 'terrasse' | 'vip' | 'etage';
+  capacityMin: number;
+  capacityMax: number;
+  active?: boolean | null;
+  /**
+   * Vérifié en plus du code pour qu’on ne puisse pas deviner les URL. Régénérer invalide les anciens QR.
+   */
+  qrToken?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: number;
+  displayName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone: string;
+  email?: string | null;
+  birthdayDay?: number | null;
+  birthdayMonth?: number | null;
+  /**
+   * Modifiable uniquement par une transaction de fidélité.
+   */
+  points?: number | null;
+  visits?: number | null;
+  optInSms?: boolean | null;
+  optInEmail?: boolean | null;
+  optInDate?: string | null;
+  lastBirthdayBonusYear?: number | null;
+  lastActivityAt?: string | null;
+  history?: {
+    docs?: (number | LoyaltyTransaction)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Pour utiliser une récompense : type « Utilisation », choisir le client et la récompense.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "loyalty-transactions".
+ */
+export interface LoyaltyTransaction {
+  id: number;
+  customer: number | Customer;
+  type: 'gain' | 'utilisation' | 'bonus_anniversaire' | 'ajustement';
+  reward?: (number | null) | Reward;
+  /**
+   * Positif ou négatif. Calculé automatiquement pour une récompense.
+   */
+  points?: number | null;
+  reason?: string | null;
+  order?: (number | null) | Order;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rewards".
+ */
+export interface Reward {
+  id: number;
+  title: string;
+  pointsCost: number;
+  description?: string | null;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Les commandes se suivent en direct sur l’écran bar (/bar).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  number: number;
+  type: 'table' | 'precommande' | 'emporter';
+  status: 'programmee' | 'recue' | 'en_preparation' | 'servie' | 'annulee';
+  serviceDate?: string | null;
+  table?: (number | null) | Table;
+  reservation?: (number | null) | Reservation;
+  customer?: (number | null) | Customer;
+  /**
+   * Heure d’arrivée (précommande) ou de retrait (à emporter).
+   */
+  scheduledFor?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  items: {
+    menuItem?: (number | null) | MenuItem;
+    title: string;
+    qty: number;
+    unitPrice: number;
+    options?: string | null;
+    note?: string | null;
+    id?: string | null;
+  }[];
+  note?: string | null;
+  total?: number | null;
+  paymentMethod?: ('caisse' | 'en_ligne') | null;
+  paymentStatus?: ('a_regler' | 'en_attente' | 'payee' | 'remboursee') | null;
+  pointsAwarded?: number | null;
+  paymentProvider?: string | null;
+  paymentRef?: string | null;
+  paidAt?: string | null;
+  servedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Le serveur peut seulement passer un produit en rupture. Aucun produit du tabac (loi Evin).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items".
+ */
+export interface MenuItem {
+  id: number;
+  title: string;
+  description?: string | null;
+  /**
+   * En centimes : 850 = 8,50 €
+   */
+  price: number;
+  category: number | MenuCategory;
+  image?: (number | null) | Media;
+  tags?: ('nouveau' | 'signature' | 'sans_alcool' | 'vegetarien' | 'alcool')[] | null;
+  /**
+   * Choix proposés à la commande (parfum, supplément…).
+   */
+  options?:
     | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
+        name: string;
+        supplement?: number | null;
+        id?: string | null;
       }[]
     | null;
-  password?: string | null;
-  collection: 'users';
+  order?: number | null;
+  /**
+   * Décoché : le produit disparaît de la carte (rupture).
+   */
+  available?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Boissons, snacks et desserts uniquement. Aucun produit du tabac (loi Evin).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-categories".
+ */
+export interface MenuCategory {
+  id: number;
+  title: string;
+  slug?: string | null;
+  /**
+   * Ex. « Servis avec une boisson comprise ».
+   */
+  note?: string | null;
+  order?: number | null;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -202,6 +417,119 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name: string;
+  /**
+   * Le serveur accède seulement à l’écran bar et aux commandes et réservations du jour.
+   */
+  role: 'gerant' | 'serveur';
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  slug?: string | null;
+  type: 'soiree_theme' | 'match' | 'autre';
+  startsAt: string;
+  endsAt?: string | null;
+  excerpt?: string | null;
+  cover?: (number | null) | Media;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  bookable?: boolean | null;
+  capacity?: number | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privatization-requests".
+ */
+export interface PrivatizationRequest {
+  id: number;
+  name: string;
+  phone: string;
+  email?: string | null;
+  date: string;
+  guests: number;
+  occasion?: string | null;
+  message?: string | null;
+  status?: ('nouvelle' | 'en_discussion' | 'acceptee' | 'refusee') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-logs".
+ */
+export interface SmsLog {
+  id: number;
+  to: string;
+  type: 'confirmation' | 'rappel' | 'annulation' | 'otp' | 'anniversaire' | 'offre';
+  category?: ('transactional' | 'marketing') | null;
+  status?: ('envoye' | 'echec' | 'demo') | null;
+  segments?: number | null;
+  content?: string | null;
+  providerId?: string | null;
+  error?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otp-codes".
+ */
+export interface OtpCode {
+  id: number;
+  phone: string;
+  codeHash: string;
+  expiresAt: string;
+  attempts?: number | null;
+  consumed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -225,12 +553,60 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'reservations';
+        value: number | Reservation;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: number | Table;
+      } | null)
+    | ({
+        relationTo: 'privatization-requests';
+        value: number | PrivatizationRequest;
+      } | null)
+    | ({
+        relationTo: 'menu-categories';
+        value: number | MenuCategory;
+      } | null)
+    | ({
+        relationTo: 'menu-items';
+        value: number | MenuItem;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null)
+    | ({
+        relationTo: 'loyalty-transactions';
+        value: number | LoyaltyTransaction;
+      } | null)
+    | ({
+        relationTo: 'rewards';
+        value: number | Reward;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null)
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'sms-logs';
+        value: number | SmsLog;
+      } | null)
+    | ({
+        relationTo: 'otp-codes';
+        value: number | OtpCode;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -276,28 +652,203 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "reservations_select".
  */
-export interface UsersSelect<T extends boolean = true> {
+export interface ReservationsSelect<T extends boolean = true> {
+  ref?: T;
+  status?: T;
+  source?: T;
+  date?: T;
+  startTime?: T;
+  durationMin?: T;
+  partySize?: T;
   name?: T;
-  role?: T;
+  phone?: T;
+  email?: T;
+  tables?: T;
+  customer?: T;
+  event?: T;
+  notes?: T;
+  startMin?: T;
+  startsAt?: T;
+  smsConfirmSentAt?: T;
+  smsReminderSentAt?: T;
   updatedAt?: T;
   createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  number?: T;
+  type?: T;
+  status?: T;
+  serviceDate?: T;
+  table?: T;
+  reservation?: T;
+  customer?: T;
+  scheduledFor?: T;
+  contactName?: T;
+  contactPhone?: T;
+  items?:
     | T
     | {
+        menuItem?: T;
+        title?: T;
+        qty?: T;
+        unitPrice?: T;
+        options?: T;
+        note?: T;
         id?: T;
-        createdAt?: T;
-        expiresAt?: T;
       };
+  note?: T;
+  total?: T;
+  paymentMethod?: T;
+  paymentStatus?: T;
+  pointsAwarded?: T;
+  paymentProvider?: T;
+  paymentRef?: T;
+  paidAt?: T;
+  servedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  code?: T;
+  label?: T;
+  zone?: T;
+  capacityMin?: T;
+  capacityMax?: T;
+  active?: T;
+  qrToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "privatization-requests_select".
+ */
+export interface PrivatizationRequestsSelect<T extends boolean = true> {
+  name?: T;
+  phone?: T;
+  email?: T;
+  date?: T;
+  guests?: T;
+  occasion?: T;
+  message?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-categories_select".
+ */
+export interface MenuCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  note?: T;
+  order?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items_select".
+ */
+export interface MenuItemsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  price?: T;
+  category?: T;
+  image?: T;
+  tags?: T;
+  options?:
+    | T
+    | {
+        name?: T;
+        supplement?: T;
+        id?: T;
+      };
+  order?: T;
+  available?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  displayName?: T;
+  firstName?: T;
+  lastName?: T;
+  phone?: T;
+  email?: T;
+  birthdayDay?: T;
+  birthdayMonth?: T;
+  points?: T;
+  visits?: T;
+  optInSms?: T;
+  optInEmail?: T;
+  optInDate?: T;
+  lastBirthdayBonusYear?: T;
+  lastActivityAt?: T;
+  history?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "loyalty-transactions_select".
+ */
+export interface LoyaltyTransactionsSelect<T extends boolean = true> {
+  customer?: T;
+  type?: T;
+  reward?: T;
+  points?: T;
+  reason?: T;
+  order?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rewards_select".
+ */
+export interface RewardsSelect<T extends boolean = true> {
+  title?: T;
+  pointsCost?: T;
+  description?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  type?: T;
+  startsAt?: T;
+  endsAt?: T;
+  excerpt?: T;
+  cover?: T;
+  description?: T;
+  bookable?: T;
+  capacity?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -353,6 +904,60 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-logs_select".
+ */
+export interface SmsLogsSelect<T extends boolean = true> {
+  to?: T;
+  type?: T;
+  category?: T;
+  status?: T;
+  segments?: T;
+  content?: T;
+  providerId?: T;
+  error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otp-codes_select".
+ */
+export interface OtpCodesSelect<T extends boolean = true> {
+  phone?: T;
+  codeHash?: T;
+  expiresAt?: T;
+  attempts?: T;
+  consumed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -390,6 +995,46 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage".
+ */
+export interface Homepage {
+  id: number;
+  heroKicker?: string | null;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  /**
+   * Ambiance du lieu uniquement, aucun produit du tabac (loi Evin).
+   */
+  heroImage?: (number | null) | Media;
+  ambiance?:
+    | {
+        title: string;
+        text: string;
+        image?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  gallery?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  reviews?:
+    | {
+        author: string;
+        text: string;
+        rating?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  ctaTitle?: string | null;
+  ctaText?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -452,6 +1097,43 @@ export interface Setting {
   };
   updatedAt?: string | null;
   createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage_select".
+ */
+export interface HomepageSelect<T extends boolean = true> {
+  heroKicker?: T;
+  heroTitle?: T;
+  heroSubtitle?: T;
+  heroImage?: T;
+  ambiance?:
+    | T
+    | {
+        title?: T;
+        text?: T;
+        image?: T;
+        id?: T;
+      };
+  gallery?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  reviews?:
+    | T
+    | {
+        author?: T;
+        text?: T;
+        rating?: T;
+        id?: T;
+      };
+  ctaTitle?: T;
+  ctaText?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -1,35 +1,29 @@
 import type { Metadata, Viewport } from 'next'
-import { Cormorant_Garamond, Inter } from 'next/font/google'
 import React from 'react'
 
+import { body, display } from '@/lib/fonts'
 import { siteUrl } from '@/lib/site-url'
 
-import './globals.css'
-
-const display = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-display',
-  display: 'swap',
-})
-
-const body = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-})
+import '@/styles/globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Le Carré · Lounge à Saint-Brice-sous-Forêt',
+    default: 'Le Carré · Restaurant lounge à Saint-Brice-sous-Forêt',
     template: '%s · Le Carré',
   },
-  description: 'Lounge et salon de thé à Saint-Brice-sous-Forêt. Réservez votre table en ligne.',
+  description:
+    'Restaurant lounge à Saint-Brice-sous-Forêt (95). Burgers, pâtes, mocktails, desserts et soirées. Ouvert 7j/7 de 18h à 2h. Réservez votre table en ligne.',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'Le Carré',
+    images: [{ url: '/brand/logo.png', width: 400, height: 400, alt: 'Le Carré' }],
+  },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0d0b0a',
+  themeColor: '#0a0a0a',
   colorScheme: 'dark',
 }
 
@@ -43,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Aller au contenu
         </a>
-        <main id="contenu">{children}</main>
+        {children}
       </body>
     </html>
   )

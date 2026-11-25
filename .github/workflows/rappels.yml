@@ -1,0 +1,25 @@
+# Rappels SMS 3 h avant les réservations, toutes les 15 min.
+# Le plan Hobby de Vercel limite les crons à un par jour : GitHub Actions prend le relais.
+# Secrets du dépôt à créer : SITE_URL (ex. https://le-carre.vercel.app) et CRON_SECRET (même valeur que sur Vercel).
+name: Rappels SMS
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  rappels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Appel de la route de rappel
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Secrets SITE_URL / CRON_SECRET absents : rien à faire."
+            exit 0
+          fi
+          curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/rappels"

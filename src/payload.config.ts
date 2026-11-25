@@ -7,8 +7,20 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
+import { Customers } from './collections/Customers'
+import { Events } from './collections/Events'
+import { LoyaltyTransactions } from './collections/LoyaltyTransactions'
 import { Media } from './collections/Media'
+import { MenuCategories } from './collections/MenuCategories'
+import { MenuItems } from './collections/MenuItems'
+import { Orders } from './collections/Orders'
+import { PrivatizationRequests } from './collections/PrivatizationRequests'
+import { Reservations } from './collections/Reservations'
+import { Rewards } from './collections/Rewards'
+import { OtpCodes, SmsLogs } from './collections/System'
+import { Tables } from './collections/Tables'
 import { Users } from './collections/Users'
+import { Homepage } from './globals/Homepage'
 import { Settings } from './globals/Settings'
 import { siteUrl } from './lib/site-url'
 
@@ -19,20 +31,46 @@ export default buildConfig({
   serverURL: siteUrl,
   admin: {
     user: Users.slug,
+    theme: 'dark',
     importMap: {
       baseDir: path.resolve(dirname),
     },
     meta: {
       titleSuffix: ' · Le Carré',
+      icons: [{ rel: 'icon', type: 'image/png', url: '/brand/logo.png' }],
     },
     dateFormat: 'dd/MM/yyyy HH:mm',
+    components: {
+      graphics: {
+        Logo: '@/components/admin/Brand#AdminLogo',
+        Icon: '@/components/admin/Brand#AdminIcon',
+      },
+      beforeLogin: ['@/components/admin/DemoLoginHint#DemoLoginHint'],
+      beforeDashboard: ['@/components/admin/Dashboard#Dashboard'],
+      afterNavLinks: ['@/components/admin/BarLink#BarLink'],
+    },
   },
   i18n: {
     supportedLanguages: { fr },
     fallbackLanguage: 'fr',
   },
-  collections: [Users, Media],
-  globals: [Settings],
+  collections: [
+    Reservations,
+    Orders,
+    Tables,
+    PrivatizationRequests,
+    MenuCategories,
+    MenuItems,
+    Customers,
+    LoyaltyTransactions,
+    Rewards,
+    Events,
+    Media,
+    Users,
+    SmsLogs,
+    OtpCodes,
+  ],
+  globals: [Homepage, Settings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -13,11 +13,11 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "test": "npm run test:int",
-    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "test": "npm run test:unit",
+    "test:e2e": "playwright test",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/index.ts",
-    "ci": "payload migrate && npm run build"
+    "ci": "payload migrate && npm run build",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.94.1",
@@ -28,7 +28,6 @@
     "@payloadcms/ui": "3.94.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cn": "^0.5.2",
     "cross-env": "^7.0.3",
     "date-fns": "^4.4.0",
     "dotenv": "16.4.7",
@@ -36,6 +35,7 @@
     "lucide-react": "^1.79.0",
     "next": "16.4.6",
     "payload": "3.94.1",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "radix-ui": "^1.8.1",
     "react": "19.2.9",

@@ -1,0 +1,202 @@
+// Habillage de l'admin Payload aux couleurs du Carré (noir, blanc, rouge du logo)
+:root {
+  --brand-red: #b3262b;
+}
+
+html[data-theme='dark'] {
+  --theme-bg: #0a0a0a;
+  --theme-input-bg: #141414;
+  --theme-elevation-0: #0a0a0a;
+  --theme-elevation-50: #141414;
+  --theme-elevation-100: #1c1c1c;
+  --theme-elevation-150: #242424;
+  --theme-success-500: #e53935;
+}
+
+.lc-admin-logo {
+  width: 160px;
+  height: 160px;
+  color: var(--theme-text);
+}
+
+.lc-admin-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--theme-text);
+}
+
+.lc-demo-box {
+  border: 1px solid var(--brand-red);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  border-radius: 4px;
+  font-size: 14px;
+
+  p {
+    margin: 4px 0 8px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  code {
+    font-size: 13px;
+  }
+}
+
+.lc-nav-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--theme-elevation-150);
+
+  a {
+    color: var(--theme-text);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  a:hover {
+    color: var(--brand-red);
+  }
+}
+
+.lc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.lc-qr-field {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 8px 0 24px;
+
+  img {
+    background: #fff;
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .btn {
+    margin: 0 8px 8px 0;
+  }
+}
+
+.lc-muted {
+  color: var(--theme-elevation-500);
+  font-size: 13px;
+}
+
+// Tableau de bord
+.lc-dash {
+  margin-bottom: 32px;
+
+  h2 {
+    margin: 0 0 4px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 16px 0 24px;
+  }
+
+  &__card {
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 6px;
+    padding: 16px;
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--theme-elevation-600);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  &__value {
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__sub {
+    color: var(--theme-elevation-600);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  &__panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--theme-elevation-100);
+      font-variant-numeric: tabular-nums;
+    }
+
+    li:last-child {
+      border-bottom: 0;
+    }
+
+    a {
+      color: var(--theme-text);
+    }
+  }
+
+  &__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 140px;
+    padding-top: 8px;
+  }
+
+  &__bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    font-size: 11px;
+    color: var(--theme-elevation-600);
+    font-variant-numeric: tabular-nums;
+
+    span {
+      display: block;
+      width: 100%;
+      max-width: 24px;
+      background: var(--theme-text);
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+    }
+  }
+}
