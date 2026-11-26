@@ -17,10 +17,10 @@ export const dynamic = 'force-dynamic'
 export default async function CommanderPage() {
   const [settings, menu] = await Promise.all([getSettings(), getMenu()])
   return (
-    <div className="mx-auto max-w-2xl px-5 py-14">
+    <div className="mx-auto max-w-6xl px-5 pb-28 pt-14 lg:pb-14">
       <p className="kicker mb-3">À emporter</p>
       <h1 className="mb-3 text-5xl">Commander</h1>
-      <p className="mb-10 text-muted-foreground">
+      <p className="mb-10 max-w-2xl text-muted-foreground">
         Choisissez vos plats, on les prépare pour l’heure de votre choix. Boissons alcoolisées uniquement sur place.
       </p>
       <TakeawayOrder

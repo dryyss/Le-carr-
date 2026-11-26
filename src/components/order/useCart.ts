@@ -56,6 +56,17 @@ export function useCart(storageKey: string, sections: MenuSectionView[]) {
     [count],
   )
 
+  /** Retire un exemplaire d'un produit (la dernière variante ajoutée s'il y en a plusieurs). */
+  const removeOne = useCallback((itemId: number) => {
+    setLines((c) => {
+      const idx = c.map((l) => l.itemId).lastIndexOf(itemId)
+      if (idx < 0) return c
+      return c.map((l, i) => (i === idx ? { ...l, qty: l.qty - 1 } : l)).filter((l) => l.qty > 0)
+    })
+  }, [])
+
+  const qtyOf = useCallback((itemId: number) => lines.filter((l) => l.itemId === itemId).reduce((s, l) => s + l.qty, 0), [lines])
+
   const clear = useCallback(() => {
     setLines([])
     localStorage.removeItem(storageKey)
@@ -63,5 +74,5 @@ export function useCart(storageKey: string, sections: MenuSectionView[]) {
 
   const payloadItems = lines.map((l) => ({ menuItemId: l.itemId, qty: l.qty, options: l.options }))
 
-  return { lines, count, total, add, changeQty, clear, payloadItems }
+  return { lines, count, total, add, changeQty, removeOne, qtyOf, clear, payloadItems }
 }

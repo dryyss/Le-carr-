@@ -70,7 +70,8 @@ export function TableMenu({
         sections={sections}
         canAdd={canOrder}
         onAdd={(item, options) => setError(cart.add(item, options) ? null : `${MAX_CART_ITEMS} articles maximum par commande.`)}
-        qtyInCart={(id) => cart.lines.filter((l) => l.itemId === id).reduce((s, l) => s + l.qty, 0)}
+        qtyInCart={cart.qtyOf}
+          onRemove={cart.removeOne}
       />
 
       <p className="mt-10 text-xs text-muted-foreground">L’abus d’alcool est dangereux pour la santé, à consommer avec modération.</p>

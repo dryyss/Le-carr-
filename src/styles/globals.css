@@ -61,17 +61,83 @@
   --font-display: var(--font-display-family), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-family), ui-sans-serif, system-ui, sans-serif;
 
-  --animate-reveal: reveal 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-reveal: reveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(22px);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes draw-stroke {
+  from {
+    stroke-dashoffset: var(--dash-len, 600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.85);
+  }
+  55% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes loader-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -86,6 +152,7 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    overflow-x: clip;
   }
   h1,
   h2,
@@ -107,6 +174,21 @@
   }
 }
 
+/* Masque le curseur natif uniquement lorsque le curseur sur mesure est actif (souris desktop) */
+html.has-custom-cursor,
+html.has-custom-cursor a,
+html.has-custom-cursor button,
+html.has-custom-cursor summary,
+html.has-custom-cursor label,
+html.has-custom-cursor [role='button'] {
+  cursor: none !important;
+}
+html.has-custom-cursor input,
+html.has-custom-cursor textarea,
+html.has-custom-cursor select {
+  cursor: text !important;
+}
+
 @layer components {
   /* Sur-titre espacé façon logo */
   .kicker {
@@ -124,6 +206,7 @@
     width: 28px;
     height: 28px;
     pointer-events: none;
+    transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1), height 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
   }
   .frame::before {
     top: 0;
@@ -137,6 +220,11 @@
     border-bottom: 2px solid var(--brand-red);
     border-left: 2px solid var(--brand-red);
   }
+  .frame:hover::before,
+  .frame:hover::after {
+    width: 42px;
+    height: 42px;
+  }
   /* « vendredi 5 décembre » => « Vendredi 5 décembre » */
   .capitalize-first {
     display: inline-block;
@@ -144,21 +232,69 @@
   .capitalize-first::first-letter {
     text-transform: uppercase;
   }
-  /* Apparition au scroll (CSS seule, sans bibliothèque) */
+  /* Apparition au scroll progressive et fluide */
   .reveal {
-    animation: reveal linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 25%;
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+  /* Halo réactif au survol de la souris */
+  .spotlight-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .spotlight-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    background: radial-gradient(
+      360px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--brand-red) 20%, transparent),
+      color-mix(in srgb, var(--foreground) 5%, transparent) 45%,
+      transparent 70%
+    );
+  }
+  .spotlight-card:hover::after {
+    opacity: 1;
+  }
+  /* Masque les barres de défilement horizontales disgracieuses */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Tracé animé du logo au chargement */
+  .logo-draw {
+    stroke-dasharray: var(--dash-len, 600);
+    stroke-dashoffset: var(--dash-len, 600);
+    animation: draw-stroke var(--dash-dur, 0.9s) cubic-bezier(0.22, 1, 0.36, 1) var(--dash-delay, 0s) forwards;
+  }
+  .animate-glow {
+    animation: glow-pulse 4.5s ease-in-out infinite;
+  }
+  .animate-float {
+    animation: float-slow 5.5s ease-in-out infinite;
+  }
+  .animate-pop {
+    animation: pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .animate-scroll-cue {
+    animation: scroll-cue 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  .animate-loader-bar {
+    transform-origin: left center;
+    animation: loader-bar 1.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 }
 
@@ -172,5 +308,22 @@
   }
 }
 .marquee {
-  animation: marquee 40s linear infinite;
+  animation: marquee 36s linear infinite;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

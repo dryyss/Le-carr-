@@ -265,11 +265,11 @@ export function ReservationForm({ today, openingHours, closures, maxPartySize, e
                 </label>
               </div>
               <div className="space-y-3 border-t border-border pt-5 text-sm">
-                <label className="flex items-start gap-3">
+                <label className="flex min-h-11 items-start gap-3 py-1">
                   <input type="checkbox" name="optInSms" className="mt-0.5 size-5 accent-foreground" />
                   <span>J’accepte de recevoir les offres et soirées du Carré par SMS. Désinscription à tout moment.</span>
                 </label>
-                <label className="flex items-start gap-3">
+                <label className="flex min-h-11 items-start gap-3 py-1">
                   <input type="checkbox" name="optInEmail" className="mt-0.5 size-5 accent-foreground" />
                   <span>J’accepte de recevoir les offres par e-mail.</span>
                 </label>
@@ -301,7 +301,8 @@ export function ReservationForm({ today, openingHours, closures, maxPartySize, e
                     sections={sections}
                     stickyTop="top-16"
                     onAdd={(item, options) => setError(cart.add(item, options) ? null : `${MAX_CART_ITEMS} articles maximum.`)}
-                    qtyInCart={(id) => cart.lines.filter((l) => l.itemId === id).reduce((s, l) => s + l.qty, 0)}
+                    qtyInCart={cart.qtyOf}
+          onRemove={cart.removeOne}
                   />
                   <div className="frame border border-border p-5">
                     <h3 className="mb-2 text-2xl">Votre précommande</h3>

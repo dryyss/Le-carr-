@@ -2,7 +2,11 @@ import { ArrowRight, CalendarCheck, Clock, Gift, MapPin, Phone, QrCode, Shopping
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { Logo } from '@/components/Logo'
+import { GalleryLightbox, type GalleryPhoto } from '@/components/motion/GalleryLightbox'
+import { InteractiveHero } from '@/components/motion/InteractiveHero'
+import { Magnetic } from '@/components/motion/Magnetic'
+import { SpotlightCard } from '@/components/motion/SpotlightCard'
+import { VideoShowcase } from '@/components/motion/VideoShowcase'
 import { EventCard } from '@/components/site/EventCard'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/content'
@@ -11,6 +15,7 @@ import { getPayloadClient, getSettings } from '@/lib/payload'
 import { formatPhoneFr } from '@/lib/phone'
 import { getMenu, getUpcomingEvents, mediaOf } from '@/lib/queries'
 import { addressLine, hoursSummary, mapsUrl } from '@/lib/site'
+import { AMBIANCE_FALLBACKS, DEFAULT_GALLERY, menuCategoryImage, menuItemImage } from '@/lib/visuals'
 
 export const revalidate = 60
 
@@ -23,6 +28,7 @@ const WAYS = [
     text: 'Choisissez votre créneau, recevez la confirmation par SMS. Vous pouvez même précommander pour être servi dès votre arrivée.',
     href: '/reserver',
     cta: 'Réserver',
+    cursor: 'RÉSERVER',
   },
   {
     icon: ShoppingBag,
@@ -30,6 +36,7 @@ const WAYS = [
     text: 'Burgers, pâtes, desserts et mocktails prêts à l’heure que vous choisissez. Payez en ligne ou au retrait.',
     href: '/commander',
     cta: 'Commander',
+    cursor: 'COMMANDER',
   },
   {
     icon: QrCode,
@@ -37,6 +44,7 @@ const WAYS = [
     text: 'Sur place, scannez le QR code de votre table : la carte s’ouvre, votre commande part directement au bar.',
     href: '/carte',
     cta: 'Voir la carte',
+    cursor: 'LA CARTE',
   },
 ]
 
@@ -71,52 +79,34 @@ export default async function HomePage() {
 
   const heroImage = mediaOf(home.heroImage)
   const signatures = menu
-    .flatMap((s) => s.items)
-    .filter((i) => i.tags?.includes('signature'))
+    .flatMap((s) => s.items.map((item) => ({ item, categorySlug: s.category.slug })))
+    .filter(({ item }) => item.tags?.includes('signature'))
     .slice(0, 6)
   const open = isOpenAt(settings)
   const mapQuery = settings.geo?.lat && settings.geo?.lng ? `${settings.geo.lat},${settings.geo.lng}` : `${settings.name} ${addressLine(settings)}`
 
+  const galleryPhotos: GalleryPhoto[] =
+    home.gallery && home.gallery.length > 0
+      ? home.gallery
+          .map((g, idx) => {
+            const img = mediaOf(g.image)
+            return img?.url ? { id: String(g.id ?? idx), url: img.url, alt: img.alt } : null
+          })
+          .filter((x): x is GalleryPhoto => x !== null)
+      : DEFAULT_GALLERY.map((g, idx) => ({ id: `default-${idx}`, url: g.url, alt: g.alt, caption: g.caption }))
+
   return (
     <>
-      {/* En-tête plein cadre */}
-      <section className="relative isolate flex min-h-[calc(100dvh-4rem)] items-center overflow-hidden">
-        {heroImage ? (
-          <>
-            <Image src={heroImage.url!} alt={heroImage.alt} fill priority sizes="100vw" className="-z-20 object-cover" />
-            <div className="absolute inset-0 -z-10 bg-linear-to-b from-background/60 via-background/70 to-background" />
-          </>
-        ) : (
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-[linear-gradient(var(--foreground)_1px,transparent_1px),linear-gradient(90deg,var(--foreground)_1px,transparent_1px)] bg-size-[64px_64px] opacity-[0.07] mask-[radial-gradient(ellipse_at_center,black,transparent_70%)]"
-          />
-        )}
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-16 md:grid-cols-[1.2fr_1fr]">
-          <div className="animate-reveal space-y-7">
-            <p className="kicker">{home.heroKicker}</p>
-            <h1 className="text-6xl uppercase leading-[0.95] tracking-[0.12em] sm:text-7xl lg:text-8xl">{home.heroTitle}</h1>
-            <p className="max-w-md text-lg text-muted-foreground">{home.heroSubtitle}</p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg">
-                <Link href="/reserver">
-                  Réserver une table <ArrowRight />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/commander">Commander à emporter</Link>
-              </Button>
-            </div>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className={`inline-block size-2 rounded-full ${open ? 'bg-success' : 'bg-muted-foreground'}`} aria-hidden />
-              {open ? 'Ouvert en ce moment' : 'Fermé pour le moment'} · {hoursSummary(settings.openingHours)[0]}
-            </p>
-          </div>
-          <div className="flex justify-center max-md:order-first">
-            <Logo className="w-40 animate-reveal sm:w-56 md:w-full md:max-w-sm" />
-          </div>
-        </div>
-      </section>
+      {/* En-tête plein cadre avec vidéo d'ambiance et parallaxe souris */}
+      <InteractiveHero
+        kicker={home.heroKicker || 'Restaurant lounge · Saint-Brice-sous-Forêt'}
+        title={home.heroTitle || 'Le Carré'}
+        subtitle={home.heroSubtitle || 'Burgers, pâtes, mocktails et desserts gourmands dans une ambiance feutrée. Ouvert 7j/7 de 18h à 2h.'}
+        posterUrl={heroImage?.url ?? '/images/site/hero-lounge.jpg'}
+        videoUrl="/videos/le-carre-ambiance.mp4"
+        open={open}
+        hoursLine={hoursSummary(settings.openingHours)[0] ?? '18h – 2h'}
+      />
 
       {/* Bandeau défilant */}
       <div className="overflow-hidden border-y border-border py-4" aria-hidden>
@@ -130,27 +120,30 @@ export default async function HomePage() {
         </div>
       </div>
 
+      {/* Section Vidéo immersive (Ambiance & Cuisine) */}
+      <VideoShowcase />
+
       {/* Trois façons */}
-      <section className="mx-auto max-w-6xl px-5 py-20" aria-labelledby="facons">
+      <section className="mx-auto max-w-6xl px-5 py-16" aria-labelledby="facons">
         <p className="kicker mb-3">Comme vous voulez</p>
         <h2 id="facons" className="mb-12 text-4xl sm:text-5xl">
           Sur place, à table ou à emporter
         </h2>
         <div className="grid gap-6 md:grid-cols-3">
           {WAYS.map((w) => (
-            <article key={w.title} className="reveal frame flex flex-col border border-border p-7">
-              <w.icon className="mb-6 size-8" aria-hidden />
+            <SpotlightCard key={w.title} cursorLabel={w.cursor} className="reveal frame flex flex-col border border-border bg-card/60 p-7">
+              <w.icon className="mb-6 size-8 text-accent" aria-hidden />
               <h3 className="mb-3 text-2xl">{w.title}</h3>
               <p className="mb-6 flex-1 text-muted-foreground">{w.text}</p>
               <Link href={w.href} className="inline-flex items-center gap-2 underline-offset-4 hover:underline">
                 {w.cta} <ArrowRight className="size-4" />
               </Link>
-            </article>
+            </SpotlightCard>
           ))}
         </div>
       </section>
 
-      {/* Ambiance */}
+      {/* Ambiance avec photos */}
       {home.ambiance && home.ambiance.length > 0 && (
         <section className="border-y border-border bg-card" aria-labelledby="ambiance">
           <div className="mx-auto max-w-6xl px-5 py-20">
@@ -161,15 +154,22 @@ export default async function HomePage() {
             <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
               {home.ambiance.map((a, i) => {
                 const img = mediaOf(a.image)
+                const photoUrl = img?.url ?? AMBIANCE_FALLBACKS[i % AMBIANCE_FALLBACKS.length]
+                const photoAlt = img?.alt ?? a.title
                 return (
-                  <article key={a.id ?? a.title} className="reveal bg-background">
-                    {img && (
-                      <div className="relative aspect-4/3">
-                        <Image src={img.url!} alt={img.alt} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
-                      </div>
-                    )}
+                  <article key={a.id ?? a.title} className="reveal group bg-background">
+                    <div className="relative aspect-4/3 overflow-hidden">
+                      <Image
+                        src={photoUrl}
+                        alt={photoAlt}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent opacity-60" />
+                    </div>
                     <div className="space-y-3 p-7">
-                      <span className="font-display text-5xl font-light text-foreground/20 tabular-nums">0{i + 1}</span>
+                      <span className="font-display text-5xl font-light text-brand-red/45 tabular-nums">0{i + 1}</span>
                       <h3 className="text-2xl">{a.title}</h3>
                       <p className="text-muted-foreground">{a.text}</p>
                     </div>
@@ -181,12 +181,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Incontournables */}
+      {/* Incontournables avec photos */}
       {signatures.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-20" aria-labelledby="signatures">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="kicker mb-3">Les favoris</p>
+              <p className="kicker mb-3 text-accent">Les favoris</p>
               <h2 id="signatures" className="text-4xl sm:text-5xl">
                 Nos incontournables
               </h2>
@@ -195,39 +195,81 @@ export default async function HomePage() {
               Toute la carte <ArrowRight className="size-4" />
             </Link>
           </div>
-          <ul className="grid gap-x-12 sm:grid-cols-2">
-            {signatures.map((i) => (
-              <li key={i.id} className="reveal flex items-baseline gap-3 border-b border-border py-5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-lg">{i.title}</p>
-                  {i.description && <p className="text-sm text-muted-foreground">{i.description}</p>}
-                </div>
-                <span className="font-display text-lg tabular-nums">{formatPrice(i.price)}</span>
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {signatures.map(({ item, categorySlug }) => (
+              <li key={item.id} className="reveal">
+                <SpotlightCard
+                  cursorLabel="CARTE"
+                  className="group flex items-center gap-4 rounded-lg border border-border/80 bg-card/55 p-4"
+                >
+                  <Link href={`/carte#${categorySlug ?? ''}`} className="flex w-full items-center gap-4">
+                    <div className="relative size-20 shrink-0 overflow-hidden rounded-md border border-border/70 bg-muted sm:size-24">
+                      <Image
+                        src={menuItemImage(item.title, categorySlug, item.image)}
+                        alt={item.title}
+                        fill
+                        sizes="96px"
+                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-lg font-medium">{item.title}</p>
+                      {item.description && <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>}
+                    </div>
+                    <span className="shrink-0 font-display text-lg tabular-nums">{formatPrice(item.price)}</span>
+                  </Link>
+                </SpotlightCard>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      {/* La carte en un coup d'œil */}
+      {/* La carte en un coup d'œil — tuiles photographiques */}
       {menu.length > 0 && (
         <section className="border-y border-border bg-card" aria-labelledby="carte-apercu">
           <div className="mx-auto max-w-6xl px-5 py-20">
-            <p className="kicker mb-3">La carte</p>
-            <h2 id="carte-apercu" className="mb-10 text-4xl sm:text-5xl">
-              De quoi grignoter, dîner ou trinquer
-            </h2>
-            <ul className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border md:grid-cols-4">
-              {menu.map(({ category, items }) => (
-                <li key={category.id} className="bg-background">
-                  <Link href={`/carte#${category.slug}`} className="group block h-full p-6 transition-colors hover:bg-secondary">
-                    <p className="font-display text-2xl font-light">{category.title}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {items.length} choix · dès {formatPrice(Math.min(...items.map((i) => i.price)))}
-                    </p>
-                  </Link>
-                </li>
-              ))}
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="kicker mb-3">La carte</p>
+                <h2 id="carte-apercu" className="text-4xl sm:text-5xl">
+                  De quoi grignoter, dîner ou trinquer
+                </h2>
+              </div>
+              <Button asChild variant="outline">
+                <Link href="/commander">
+                  Commander à emporter <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+            <ul className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              {menu.map(({ category, items }) => {
+                const slug = category.slug ?? String(category.id)
+                return (
+                  <li key={category.id} className="reveal">
+                    <Link
+                      href={`/carte#${slug}`}
+                      data-cursor-label="VOIR"
+                      className="group relative flex aspect-4/5 flex-col justify-end overflow-hidden rounded-md border border-border bg-background p-5 transition-colors hover:border-brand-red/70"
+                    >
+                      <Image
+                        src={menuCategoryImage(slug)}
+                        alt={category.title}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 20vw"
+                        className="object-cover opacity-70 transition-transform duration-700 ease-out group-hover:scale-110 group-hover:opacity-90"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background via-background/45 to-transparent" />
+                      <div className="relative z-10">
+                        <p className="font-display text-2xl font-light text-foreground">{category.title}</p>
+                        <p className="mt-1 text-xs text-foreground/75">
+                          {items.length} choix · dès {formatPrice(Math.min(...items.map((i) => i.price)))}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </section>
@@ -238,7 +280,7 @@ export default async function HomePage() {
         <section className="mx-auto max-w-6xl px-5 py-20" aria-labelledby="evenements">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="kicker mb-3">Agenda</p>
+              <p className="kicker mb-3 text-accent">Agenda</p>
               <h2 id="evenements" className="text-4xl sm:text-5xl">
                 Prochains événements
               </h2>
@@ -257,9 +299,9 @@ export default async function HomePage() {
 
       {/* Fidélité */}
       <section className="mx-auto max-w-6xl px-5 py-20" aria-labelledby="fidelite">
-        <div className="frame grid gap-10 border border-border p-8 sm:p-12 md:grid-cols-2">
+        <SpotlightCard className="reveal frame grid gap-10 border border-border bg-card/45 p-8 sm:p-12 md:grid-cols-2">
           <div className="space-y-5">
-            <Gift className="size-8" aria-hidden />
+            <Gift className="size-8 text-accent" aria-hidden />
             <p className="kicker">Programme de fidélité</p>
             <h2 id="fidelite" className="text-4xl sm:text-5xl">
               1 € = {settings.loyalty?.pointsPerEuro ?? 1} point
@@ -267,41 +309,33 @@ export default async function HomePage() {
             <p className="text-muted-foreground">
               Donnez votre numéro en commandant, les points se cumulent tout seuls. Un bonus vous attend le jour de votre anniversaire.
             </p>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/connexion">Créer ma carte</Link>
-            </Button>
+            <Magnetic className="inline-block">
+              <Button asChild size="lg" variant="outline">
+                <Link href="/connexion">Créer ma carte</Link>
+              </Button>
+            </Magnetic>
           </div>
           {rewards.docs.length > 0 && (
             <ul className="divide-y divide-border self-center border-y border-border">
               {rewards.docs.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-4 py-4">
                   <span>{r.title}</span>
-                  <span className="shrink-0 font-display text-lg tabular-nums">{r.pointsCost} pts</span>
+                  <span className="shrink-0 font-display text-lg tabular-nums text-accent">{r.pointsCost} pts</span>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </SpotlightCard>
       </section>
 
-      {/* Galerie */}
-      {home.gallery && home.gallery.length > 0 && (
+      {/* Galerie interactive avec lightbox */}
+      {galleryPhotos.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-20" aria-labelledby="galerie">
           <p className="kicker mb-3">En images</p>
           <h2 id="galerie" className="mb-10 text-4xl sm:text-5xl">
             Galerie
           </h2>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {home.gallery.map((g, idx) => {
-              const img = mediaOf(g.image)
-              if (!img) return null
-              return (
-                <div key={g.id ?? idx} className={`reveal relative overflow-hidden ${idx % 5 === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'}`}>
-                  <Image src={img.url!} alt={img.alt} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
-                </div>
-              )
-            })}
-          </div>
+          <GalleryLightbox photos={galleryPhotos} />
         </section>
       )}
 
@@ -315,15 +349,17 @@ export default async function HomePage() {
             </h2>
             <div className="grid gap-6 md:grid-cols-3">
               {home.reviews.map((r) => (
-                <figure key={r.id ?? r.author} className="reveal frame border border-border bg-background p-7">
-                  <div className="mb-4 flex gap-1" role="img" aria-label={`${r.rating ?? 5} sur 5`}>
-                    {Array.from({ length: r.rating ?? 5 }, (_, k) => (
-                      <Star key={k} className="size-4 fill-foreground" aria-hidden />
-                    ))}
-                  </div>
-                  <blockquote className="text-lg leading-relaxed">« {r.text} »</blockquote>
-                  <figcaption className="mt-4 text-sm text-muted-foreground">{r.author}</figcaption>
-                </figure>
+                <SpotlightCard key={r.id ?? r.author} className="reveal frame border border-border bg-background p-7">
+                  <figure>
+                    <div className="mb-4 flex gap-1" role="img" aria-label={`${r.rating ?? 5} sur 5`}>
+                      {Array.from({ length: r.rating ?? 5 }, (_, k) => (
+                        <Star key={k} className="size-4 fill-accent text-accent" aria-hidden />
+                      ))}
+                    </div>
+                    <blockquote className="text-lg leading-relaxed">« {r.text} »</blockquote>
+                    <figcaption className="mt-4 text-sm text-muted-foreground">{r.author}</figcaption>
+                  </figure>
+                </SpotlightCard>
               ))}
             </div>
           </div>
@@ -391,7 +427,7 @@ export default async function HomePage() {
             <details key={f.q} className="group py-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg">
                 {f.q}
-                <span className="text-2xl transition-transform group-open:rotate-45" aria-hidden>
+                <span className="text-2xl text-accent transition-transform duration-300 group-open:rotate-45" aria-hidden>
                   +
                 </span>
               </summary>
@@ -403,20 +439,24 @@ export default async function HomePage() {
 
       {/* Appel à réserver */}
       <section className="mx-auto max-w-6xl px-5">
-        <div className="frame flex flex-col items-start gap-6 border border-border p-10 sm:flex-row sm:items-center sm:justify-between sm:p-14">
+        <SpotlightCard className="reveal frame flex flex-col items-start gap-6 border border-border bg-card/50 p-10 sm:flex-row sm:items-center sm:justify-between sm:p-14">
           <div className="space-y-3">
             <h2 className="text-4xl">{home.ctaTitle}</h2>
             <p className="text-muted-foreground">{home.ctaText}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
-              <Link href="/reserver">Réserver</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/privatisation">Privatiser</Link>
-            </Button>
+            <Magnetic>
+              <Button asChild size="lg">
+                <Link href="/reserver">Réserver</Link>
+              </Button>
+            </Magnetic>
+            <Magnetic>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/privatisation">Privatiser</Link>
+              </Button>
+            </Magnetic>
           </div>
-        </div>
+        </SpotlightCard>
       </section>
     </>
   )
